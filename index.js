@@ -14,10 +14,6 @@ const helmet = require("helmet")
 var xss = require("xss");
 
 
-
-
-
-
 app.use(express.json())
 
 app.use(helmet());
@@ -61,6 +57,8 @@ app.get('/', (req, res , next) => {
   next()
 });
 ////////////////////////////////
-app.listen(5000 , (req,res) => {
+
+
+app.listen(5000 || process.env.SERVER , (req,res) => {
  console.log("server run")
 })
