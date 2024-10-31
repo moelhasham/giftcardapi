@@ -17,7 +17,11 @@ app.use(express.json())
 
 app.use(helmet());
 
-app.use(cors())
+
+const corsOptions = {
+  origin: 'https://royalcell.online'
+};
+app.use(cors(corsOptions))
 
 app.use(rateLimit({
   windowMs: 10 * 60 * 1000,
