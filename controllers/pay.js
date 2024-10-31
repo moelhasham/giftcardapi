@@ -5,9 +5,11 @@ const {GiftCard} = require("../models/GiftCard");
 const {Order} = require("../models/Order");
 const {OrderDetails} = require("../models/OrderDetails");
 const axios = require("axios");
+const crypto = require('crypto');
 const async = require('hbs/lib/async');
-const  sendgiftcard  = require("./productes")
+
 require("dotenv").config()
+
 
 
 
@@ -267,30 +269,53 @@ module.exports.comfirmSadad = asyncHandler(async (req,res,next) => {
       }
 })
 
-module.exports.getPrice = asyncHandler(async (req,res) => {
-   const { cartItems  } = req.body
 
-   try {
-    let amount = 0
+function createSecureHash(data, key) {
+  return crypto.createHmac("sha256", Buffer.from(key, "hex"))
+      .update(data)
+      .digest("hex")
+      .toUpperCase();
+}
+
+module.exports.getSecureHash = asyncHandler( async (req,res) => {
+  const {merchantReference, cartItems } = req.body;
+
+  if (!merchantReference) {
+      return res.status(400).json({ error: "Amount and merchantReference are required." });
+  }
+
+ const MID="10081014649"
+ const TID="99179395"
+ const key="39636630633731362D663963322D346362642D386531662D633963303432353936373431"
+
+  let amount = 0
   for(let i = 0 ; i < cartItems.length ; i++){
       const getproduct = await Product.find({_id: cartItems[i].id})
       
        amount +=   getproduct[0].price
-  
   }
-      
-      res.json({secuss:true ,amount:amount + ""})
-
-
-   } catch (error) {
-      res.json(error.message)
-   }
+  amount = (amount * 1000).toString()
+  //  console.log(cartItems)
+  //  console.log(merchantReference)
+  const dateTimeLocalTrxn = Math.floor(Date.now() / 1000).toString();
+  const encodeData = `Amount=${amount}&DateTimeLocalTrxn=${dateTimeLocalTrxn}&MerchantId=${MID}&MerchantReference=${merchantReference}&TerminalId=${TID}`;
+  const secureHash = createSecureHash(encodeData, key);
+  console.log(secureHash)
+  res.json({
+      MID,
+      TID,
+      amount,
+      dateTimeLocalTrxn,
+      secureHash,
+      merchantReference,
+  });
 })
 
 
 module.exports.confirmCard = asyncHandler(async (req,res,next) => {
   try {
     const { cartItems , email } = req.body
+
       const randomNumber = Math.floor(Math.random() * 1000000);
       const order =`RC${randomNumber.toString()}`
    
@@ -299,7 +324,6 @@ module.exports.confirmCard = asyncHandler(async (req,res,next) => {
      })
       const NewOrderNumber = await OrderNumber.save()
 
-       
       let amount = 0
 
        // SAVE ORDER DETAILS IN DB
@@ -309,7 +333,7 @@ module.exports.confirmCard = asyncHandler(async (req,res,next) => {
             Product:cartItem.id,
             TotalOrder: 0,
             Email:email,
-            mobilenumber:"0918980076" ,
+            mobilenumber:"09********" ,
             paymentmethod:"بطاقة مصرفية",
     
       });
@@ -318,7 +342,6 @@ module.exports.confirmCard = asyncHandler(async (req,res,next) => {
       });
 
        const newOrders = await Promise.all(orderPromises)
-
 
       // GET TOTAL ORDER 
       for(let i = 0 ; i < cartItems.length ; i++){
@@ -340,10 +363,11 @@ module.exports.confirmCard = asyncHandler(async (req,res,next) => {
         
         res.status(400).json({message:"ypur order faild"})
        }
-
-       
-    
-       
-
 })
+
+
+
+
+
+
 
