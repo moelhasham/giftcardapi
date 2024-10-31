@@ -284,10 +284,14 @@ module.exports.getSecureHash = asyncHandler( async (req,res) => {
       return res.status(400).json({ error: "Amount and merchantReference are required." });
   }
 
- const MID="10081014649"
- const TID="99179395"
- const key="39636630633731362D663963322D346362642D386531662D633963303432353936373431"
+ const MID= '10040898689';
+ const TID= '88529158';
+ const key= '31643564383937632D356564342D343539362D383033622D623839393566383364643138';
 
+
+
+ 
+ 
   let amount = 0
   for(let i = 0 ; i < cartItems.length ; i++){
       const getproduct = await Product.find({_id: cartItems[i].id})
